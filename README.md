@@ -1,5 +1,9 @@
 # 🌐 CodeAlpha — Language Translation Tool (Task 1)
 
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-Online-brightgreen)](https://ehsantranslator.pythonanywhere.com)
+[![Python](https://img.shields.io/badge/Python-3.10-blue)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-3.0-lightgrey)](https://flask.palletsprojects.com)
+
 A professional AI-powered language translation web app built for the **CodeAlpha Artificial Intelligence Internship**.
 
 ## ✨ Features
