@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aether AI — Language Translator | CodeAlpha</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Geist:wght@600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: { extend: {
+    colors: {
+      "on-background": "#d4e4fa", "surface": "#051424", "background": "#051424",
+      "primary": "#c3f5ff", "primary-container": "#00e5ff", "primary-fixed-dim": "#00daf3",
+      "on-primary-fixed": "#001f24", "on-surface-variant": "#bac9cc",
+      "surface-container-low": "#0d1c2d", "surface-container-high": "#1c2b3c",
+      "surface-container-highest": "#273647", "surface-container": "#122131"
+    },
+    fontFamily: {
+      "body-md": ["Inter"], "display-lg": ["Geist"], "headline-md": ["Geist"], "label-sm": ["JetBrains Mono"]
+    }
+  }}
+}
+</script>
+<style>
+  .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 24px; }
+  .glass-card { background: rgba(8,24,42,0.78); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); }
+  .input-glow:focus-within { border-color: rgba(0,229,255,0.45); box-shadow: 0 0 35px rgba(0,229,255,0.18); }
+  .accent-glow { box-shadow: 0 0 25px rgba(0,229,255,0.12); }
+  .translate-button {
+    background: linear-gradient(135deg, #00e5ff 0%, #0083b0 100%);
+    color: #001f24; transition: all .3s ease;
+    box-shadow: 0 0 25px rgba(0,229,255,0.35);
+  }
+  .translate-button:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 0 45px rgba(0,229,255,0.55); }
+  .translate-button:active { transform: scale(0.97); }
+  .ai-pulse { animation: aipulse 1.6s ease-in-out infinite; }
+  @keyframes aipulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.25); border-radius: 3px; }
+  select option { background: #0d1c2d; color: #d4e4fa; }
+  .fade-in { animation: fadein .45s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(8px);} to { opacity:1; transform: none;} }
+</style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary/30 min-h-screen relative overflow-x-hidden">
+
+<!-- ============ Animated Crystal Shader Background (dimmed for readability) ============ -->
+<div class="fixed inset-0 w-full h-full pointer-events-none opacity-20">
+<canvas id="shader-canvas" style="display:block;width:100%;height:100%"></canvas>
+</div>
+<!-- Dark overlay to keep foreground text readable over the animation -->
+<div class="fixed inset-0 w-full h-full pointer-events-none bg-background/55"></div>
+
+<!-- ============ Top Navigation ============ -->
+<nav class="fixed top-0 w-full z-50 bg-surface/60 backdrop-blur-xl border-b border-white/10 shadow-[0_0_20px_rgba(0,229,255,0.15)] h-20 flex justify-between items-center px-6 md:px-16">
+  <div class="flex items-center gap-8">
+    <span class="font-display-lg text-2xl md:text-3xl font-bold text-primary tracking-tighter">Aether AI</span>
+    <div class="hidden md:flex items-center gap-6">
+      <a class="text-primary font-bold border-b-2 border-primary pb-1" href="/">Translator</a>
+      <a class="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200" href="http://localhost:5001" title="Run the FAQ chatbot app first (port 5001)">FAQ Bot</a>
+    </div>
+  </div>
+  <div class="flex items-center gap-3">
+    <span class="px-3 py-1 bg-primary/20 text-primary text-xs font-label-sm rounded-full border border-primary/30 hidden sm:inline">CodeAlpha AI Internship</span>
+    <div class="flex items-center gap-1.5">
+      <div class="w-2 h-2 rounded-full bg-primary-container ai-pulse"></div>
+      <span class="text-xs font-label-sm text-primary/80 uppercase tracking-widest">Online</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ Main ============ -->
+<main class="pt-24 px-5 md:px-16 pb-10 max-w-[1440px] mx-auto relative">
+
+  <!-- Hero with 3D Crystal -->
+  <section class="relative py-8 md:py-0 md:h-72 flex flex-col justify-center items-start mb-8 md:mb-10 overflow-hidden rounded-3xl md:rounded-[2rem] px-5 md:px-8 glass-card">
+    <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent z-0"></div>
+    <div class="absolute right-0 top-0 w-1/2 h-full z-10 pointer-events-none flex items-center justify-center">
+      <div id="crystal-container" class="w-40 h-40 opacity-30 md:w-80 md:h-80 md:opacity-80"></div>
+    </div>
+    <div class="relative z-20 space-y-3 max-w-2xl">
+      <div class="flex items-center gap-3">
+        <span class="px-3 py-1 bg-primary/20 text-primary text-[10px] md:text-xs font-label-sm rounded-full border border-primary/30">Neural Translation Core</span>
+      </div>
+      <h1 class="font-display-lg text-2xl sm:text-3xl md:text-5xl font-bold text-white leading-tight">
+        Translate with <span class="text-primary italic">Crystal Precision.</span>
+      </h1>
+      <p class="text-on-surface-variant max-w-lg text-xs sm:text-sm md:text-base">
+        Bridge linguistic gaps across 100+ languages with context-aware AI translation, instant audio playback and one-click copy.
+      </p>
+    </div>
+  </section>
+
+  <!-- Translation Core -->
+  <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+    <!-- Left: translator -->
+    <div class="lg:col-span-8 space-y-6">
+
+      <!-- Language selector bar -->
+      <div class="glass-card rounded-2xl p-3 md:p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2 md:gap-4 w-full">
+          <div class="relative flex-1 min-w-[105px] sm:min-w-[140px]">
+            <select id="source-lang" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 appearance-none text-primary font-label-sm text-sm focus:outline-none focus:border-primary cursor-pointer transition-all">
+              <option value="auto" selected>✨ Auto Detect</option>
+              {% for name, code in languages.items() %}
+              <option value="{{ code }}">{{ name }}</option>
+              {% endfor %}
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-3 pointer-events-none text-primary/50">keyboard_arrow_down</span>
+          </div>
+          <button id="swap-btn" title="Swap languages" class="p-2 rounded-full bg-white/5 border border-white/10 text-primary-container hover:bg-primary-container hover:text-on-primary-fixed transition-all active:rotate-180 duration-500">
+            <span class="material-symbols-outlined">swap_horiz</span>
+          </button>
+          <div class="relative flex-1 min-w-[105px] sm:min-w-[140px]">
+            <select id="target-lang" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 appearance-none text-primary font-label-sm text-sm focus:outline-none focus:border-primary cursor-pointer transition-all">
+              {% for name, code in languages.items() %}
+              <option value="{{ code }}" {% if code == 'ur' %}selected{% endif %}>{{ name }}</option>
+              {% endfor %}
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-3 pointer-events-none text-primary/50">keyboard_arrow_down</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input / Output -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Input -->
+        <div class="glass-card rounded-3xl md:rounded-[2rem] p-5 md:p-6 flex flex-col h-[280px] md:h-[380px] input-glow transition-all duration-300">
+          <div class="flex justify-between items-center mb-4">
+            <span class="text-xs font-label-sm text-on-surface-variant uppercase tracking-widest">Input Text</span>
+            <div class="flex items-center gap-2">
+              <button id="mic-btn" class="p-2 hover:bg-primary/10 rounded-lg text-primary transition-colors" title="Speak to type (voice input)">
+                <span class="material-symbols-outlined text-xl">mic</span>
+              </button>
+              <span id="char-count" class="text-xs font-label-sm text-on-surface-variant/50">0 / 5000</span>
+            </div>
+          </div>
+          <textarea id="input-text" maxlength="5000" class="flex-1 bg-transparent border-none focus:ring-0 p-0 text-white text-lg resize-none custom-scrollbar placeholder:text-white/20" placeholder="Enter text to translate..."></textarea>
+        </div>
+        <!-- Output -->
+        <div class="glass-card rounded-3xl md:rounded-[2rem] p-5 md:p-6 flex flex-col h-[280px] md:h-[380px] relative overflow-hidden bg-white/[0.02]">
+          <div class="flex justify-between items-center mb-4 relative z-10">
+            <span class="text-xs font-label-sm text-primary uppercase tracking-widest">Aether Translation</span>
+            <div class="flex gap-2">
+              <button id="copy-btn" class="p-2 hover:bg-primary/10 rounded-lg text-primary transition-colors disabled:opacity-30" title="Copy" disabled>
+                <span class="material-symbols-outlined text-xl">content_copy</span>
+              </button>
+              <button id="speak-btn" class="p-2 hover:bg-primary/10 rounded-lg text-primary transition-colors disabled:opacity-30" title="Listen" disabled>
+                <span class="material-symbols-outlined text-xl">volume_up</span>
+              </button>
+            </div>
+          </div>
+          <div id="output-area" class="flex-1 overflow-y-auto custom-scrollbar text-white/40 text-lg italic relative z-10 flex items-center justify-center text-center">
+            Translation will appear here...
+          </div>
+          <div class="absolute bottom-0 right-0 p-6 z-0 opacity-10">
+            <span class="material-symbols-outlined" style="font-size:80px">translate</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Translate button -->
+      <div class="flex justify-center mt-6">
+        <button id="translate-btn" class="translate-button w-full sm:w-auto justify-center px-8 md:px-12 py-4 md:py-5 rounded-2xl flex items-center gap-4 font-headline-md text-lg md:text-xl font-semibold group">
+          <span>Translate Now</span>
+          <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">auto_awesome</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: live stats + history -->
+    <div class="lg:col-span-4 space-y-6">
+      <div class="glass-card rounded-3xl p-6 accent-glow border-primary/20">
+        <h3 class="font-headline-md text-xl text-white mb-4 flex items-center gap-3">
+          <span class="material-symbols-outlined text-primary">neurology</span> Linguistic Context
+        </h3>
+        <div class="grid grid-cols-2 gap-3 md:block md:space-y-4">
+          <div class="p-4 rounded-xl bg-white/5 border border-white/10 space-y-1">
+            <p class="text-xs font-label-sm text-primary/80">Characters / Words</p>
+            <p id="stat-chars" class="text-white font-semibold text-lg">0 / 0</p>
+          </div>
+          <div class="p-4 rounded-xl bg-white/5 border border-white/10 space-y-1">
+            <p class="text-xs font-label-sm text-primary/80">Last Translation Time</p>
+            <p id="stat-time" class="text-white font-semibold text-lg">—</p>
+          </div>
+          <div class="p-4 rounded-xl bg-white/5 border border-white/10 space-y-1 col-span-2 md:col-span-1">
+            <p class="text-xs font-label-sm text-primary/80">Direction</p>
+            <p id="stat-direction" class="text-white font-semibold text-lg">—</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-3xl p-6">
+        <h3 class="font-headline-md text-xl text-white mb-4">Recent Translations</h3>
+        <div id="history" class="space-y-3">
+          <p class="text-on-surface-variant text-sm italic">No translations yet.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="w-full py-8 border-t border-white/10 bg-surface/60 backdrop-blur-xl flex justify-center items-center relative z-40">
+  <p class="text-primary font-label-sm text-xs tracking-widest uppercase opacity-80">Developed By Muhammad Ehsan — CodeAlpha AI Internship</p>
+</footer>
+
+<!-- ============ Scripts ============ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ---------- WebGL crystal shader background ---------- */
+(function() {
+  const canvas = document.getElementById('shader-canvas');
+  function syncSize(){ const w=canvas.clientWidth||1280,h=canvas.clientHeight||720;
+    if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;} }
+  if (typeof ResizeObserver!=='undefined') new ResizeObserver(syncSize).observe(canvas);
+  syncSize();
+  const gl = canvas.getContext('webgl'); if(!gl) return;
+  const vs=`attribute vec2 a_position;varying vec2 v_texCoord;
+    void main(){v_texCoord=a_position*0.5+0.5;gl_Position=vec4(a_position,0.0,1.0);}`;
+  const fs=`precision highp float;varying vec2 v_texCoord;uniform float u_time;
+    void main(){vec2 uv=v_texCoord;float time=u_time*0.2;
+    vec3 c1=vec3(0.02,0.08,0.14);vec3 c2=vec3(0.0,0.9,1.0);vec3 c3=vec3(0.1,0.4,0.7);
+    float n=sin(uv.x*3.0+time)*cos(uv.y*3.0-time);n+=sin(uv.y*5.0+time*1.5)*0.5;
+    vec3 f=mix(c1,c3,n*0.5+0.5);f=mix(f,c2,pow(max(0.0,n),3.0));
+    gl_FragColor=vec4(f*0.5,1.0);}`;
+  function cs(t,s){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh;}
+  const p=gl.createProgram();gl.attachShader(p,cs(gl.VERTEX_SHADER,vs));
+  gl.attachShader(p,cs(gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);gl.useProgram(p);
+  const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(p,'a_position');gl.enableVertexAttribArray(pos);
+  gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const uT=gl.getUniformLocation(p,'u_time');
+  (function render(t){gl.viewport(0,0,canvas.width,canvas.height);
+    if(uT)gl.uniform1f(uT,t*0.001);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+    requestAnimationFrame(render);})(0);
+})();
+
+/* ---------- 3D floating crystal ---------- */
+(function() {
+  const container = document.getElementById('crystal-container');
+  const w = container.clientWidth || 300, h = container.clientHeight || 300;
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, w/h, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  renderer.setSize(w, h); container.appendChild(renderer.domElement);
+  const crystal = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(1, 1),
+    new THREE.MeshPhongMaterial({ color: 0x00e5ff, emissive: 0x004a55, specular: 0xffffff,
+      shininess: 100, transparent: true, opacity: 0.8, wireframe: true }));
+  scene.add(crystal);
+  const light = new THREE.PointLight(0xffffff, 1, 100); light.position.set(5,5,5);
+  scene.add(light); scene.add(new THREE.AmbientLight(0x404040));
+  camera.position.z = 3;
+  (function animate(){ requestAnimationFrame(animate);
+    crystal.rotation.x += 0.005; crystal.rotation.y += 0.005;
+    crystal.position.y = Math.sin(Date.now()*0.001)*0.1;
+    renderer.render(scene, camera); })();
+})();
+
+/* ---------- Translator logic (real backend calls) ---------- */
+const inputText   = document.getElementById('input-text');
+const outputArea  = document.getElementById('output-area');
+const translateBtn= document.getElementById('translate-btn');
+const copyBtn     = document.getElementById('copy-btn');
+const speakBtn    = document.getElementById('speak-btn');
+const srcSel      = document.getElementById('source-lang');
+const tgtSel      = document.getElementById('target-lang');
+const charCount   = document.getElementById('char-count');
+const historyDiv  = document.getElementById('history');
+let lastTranslation = "", historyItems = [];
+
+inputText.addEventListener('input', () => {
+  charCount.textContent = `${inputText.value.length} / 5000`;
+  const words = inputText.value.trim() ? inputText.value.trim().split(/\s+/).length : 0;
+  document.getElementById('stat-chars').textContent = `${inputText.value.length} / ${words}`;
+});
+
+document.getElementById('swap-btn').addEventListener('click', () => {
+  if (srcSel.value === 'auto') return;
+  const tmp = srcSel.value; srcSel.value = tgtSel.value; tgtSel.value = tmp;
+});
+
+async function doTranslate() {
+  const text = inputText.value.trim();
+  if (!text) { outputArea.innerHTML = '<span class="text-yellow-300 not-italic">⚠️ Please enter some text first.</span>'; return; }
+  translateBtn.disabled = true;
+  outputArea.innerHTML = '<div class="flex flex-col items-center gap-4"><div class="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary-container animate-spin"></div><span class="animate-pulse text-primary/70">Synthesizing Neural Map...</span></div>';
+  const t0 = performance.now();
+  try {
+    const res = await fetch('/api/translate', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ text, source: srcSel.value, target: tgtSel.value })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Translation failed');
+    lastTranslation = data.translated;
+    outputArea.innerHTML = `<div class="text-left w-full h-full text-white not-italic fade-in text-lg leading-relaxed">${escapeHtml(data.translated)}</div>`;
+    copyBtn.disabled = false;
+    speakBtn.disabled = false;
+    const ms = Math.round(performance.now() - t0);
+    document.getElementById('stat-time').textContent = `${ms} ms`;
+    document.getElementById('stat-direction').textContent =
+      `${srcSel.options[srcSel.selectedIndex].text.replace('✨ ','')} → ${tgtSel.options[tgtSel.selectedIndex].text}`;
+    addHistory(text, data.translated);
+  } catch (err) {
+    outputArea.innerHTML = `<span class="text-red-400 not-italic">❌ ${escapeHtml(err.message)}</span>`;
+  } finally { translateBtn.disabled = false; }
+}
+translateBtn.addEventListener('click', doTranslate);
+inputText.addEventListener('keydown', e => { if (e.key === 'Enter' && e.ctrlKey) doTranslate(); });
+
+copyBtn.addEventListener('click', async () => {
+  await navigator.clipboard.writeText(lastTranslation);
+  copyBtn.querySelector('span').textContent = 'check';
+  setTimeout(() => copyBtn.querySelector('span').textContent = 'content_copy', 1500);
+});
+
+speakBtn.addEventListener('click', async () => {
+  if (!lastTranslation) return;
+  speakBtn.disabled = true;
+  speakBtn.querySelector('span').classList.add('ai-pulse');
+  const done = () => { speakBtn.disabled = false; speakBtn.querySelector('span').classList.remove('ai-pulse'); };
+  try {
+    // 1) Try server-side Google TTS (high quality)
+    const res = await fetch('/api/tts', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ text: lastTranslation, lang: tgtSel.value })
+    });
+    if (!res.ok) throw new Error('server tts unavailable');
+    const blob = await res.blob();
+    const audio = new Audio(URL.createObjectURL(blob));
+    audio.onended = done;
+    audio.onerror = done;
+    await audio.play();
+  } catch (e) {
+    // 2) Fallback: browser's built-in voice (works offline too)
+    try {
+      const utter = new SpeechSynthesisUtterance(lastTranslation);
+      utter.lang = tgtSel.value;
+      utter.onend = done;
+      utter.onerror = done;
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utter);
+    } catch (e2) {
+      alert('Sorry, voice is not available for this language on your system.');
+      done();
+    }
+  }
+});
+
+/* ---------- Voice input (speech-to-text) via mic button ---------- */
+const micBtn = document.getElementById('mic-btn');
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognizing = false, recognition = null;
+
+if (SpeechRec) {
+  recognition = new SpeechRec();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  recognition.onresult = (event) => {
+    let transcript = '';
+    for (const result of event.results) transcript += result[0].transcript;
+    inputText.value = transcript;
+    inputText.dispatchEvent(new Event('input'));
+  };
+  recognition.onend = () => {
+    recognizing = false;
+    micBtn.querySelector('span').textContent = 'mic';
+    micBtn.querySelector('span').classList.remove('ai-pulse','text-red-400');
+    if (inputText.value.trim()) doTranslate();   // auto-translate after speaking
+  };
+  recognition.onerror = () => { recognition.onend(); };
+
+  micBtn.addEventListener('click', () => {
+    if (recognizing) { recognition.stop(); return; }
+    // Use selected source language for recognition (auto -> English)
+    recognition.lang = srcSel.value === 'auto' ? 'en-US' : srcSel.value;
+    recognition.start();
+    recognizing = true;
+    micBtn.querySelector('span').textContent = 'mic';
+    micBtn.querySelector('span').classList.add('ai-pulse','text-red-400');
+    inputText.placeholder = '🎤 Listening... speak now';
+  });
+} else {
+  micBtn.addEventListener('click', () =>
+    alert('Voice input works in Google Chrome / Edge. Please use one of those browsers.'));
+}
+
+function addHistory(src, dst) {
+  historyItems.unshift({ src, dst });
+  historyItems = historyItems.slice(0, 5);
+  historyDiv.innerHTML = historyItems.map(h => `
+    <div class="p-3 rounded-xl bg-white/5 border border-white/10 fade-in">
+      <p class="text-white/60 text-xs truncate">${escapeHtml(h.src)}</p>
+      <p class="text-primary text-sm truncate mt-1">${escapeHtml(h.dst)}</p>
+    </div>`).join('');
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
