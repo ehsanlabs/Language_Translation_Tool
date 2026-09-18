@@ -1,4 +1,4 @@
-# 🌐 CodeAlpha — Language Translation Tool (Task 1)
+# 🌐 Language Translation Tool
 
 [![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-Online-brightgreen)](https://ehsantranslator.pythonanywhere.com)
 [![Python](https://img.shields.io/badge/Python-3.10-blue)](https://python.org)
